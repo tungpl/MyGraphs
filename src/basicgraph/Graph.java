@@ -122,7 +122,14 @@ public abstract class Graph {
 	 */
 	public List<Integer> degreeSequence() {
 		// XXX: Implement in part 1 of week 1
-		return null;
+		List<Integer> ds = new ArrayList<Integer>();
+		for(int i = 0 ; i < numVertices ; i++ ){
+			Integer num = this.getInNeighbors(i).size() + this.getNeighbors(i).size();
+			ds.add(num);
+		}
+		Collections.sort(ds,Collections.reverseOrder());
+		
+		return ds;
 	}
 	
 	/**
@@ -229,7 +236,7 @@ public abstract class Graph {
 	
 	/** Main method provided with some basic tests.  */
 	public static void main (String[] args) {
-		GraphLoader.createIntersectionsFile("data/maps/ucsd.map", "data/intersections/ucsd.intersections");
+		GraphLoader.createIntersectionsFile("data/maps/redondo.map", "data/intersections/redondo.intersections");
 		
 
 		// For testing of Part 1 functionality
@@ -261,7 +268,11 @@ public abstract class Graph {
 		//For testing Part 2 functionality
 		// Test your distance2 code here.
 		System.out.println("Testing distance-two methods on sample graphs...");
+		System.out.println(graphFromFile.getDistance2(5));
 		System.out.println("Goal: implement method using two approaches.");
+		GraphAdjMatrix graphMxFromFile = new GraphAdjMatrix();
+		GraphLoader.loadRoadMap("data/testdata/simpletest.map", graphMxFromFile);
+		System.out.println(graphMxFromFile.getDistance2(5));
 
 
 		
