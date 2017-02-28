@@ -8,7 +8,12 @@
 package roadgraph;
 
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Queue;
 import java.util.Set;
 import java.util.function.Consumer;
 
@@ -25,13 +30,27 @@ import util.GraphLoader;
 public class MapGraph {
 	//TODO: Add your member variables here in WEEK 2
 	
-	
+	/*
+	 * vertices maintains all the vertices of the Map
+	 */
+	private Set<GeographicPoint> vertices;
+	/*
+	 * mapEdges is a HashMap to store mapping from one particular vertex to a Mapnode
+	 */
+	private HashMap<GeographicPoint,MapNode> mapEdges;
+	/*
+	 * edgeNum response for number of edge in map
+	 */
+	private int edgeNum;
 	/** 
 	 * Create a new empty MapGraph 
 	 */
 	public MapGraph()
 	{
 		// TODO: Implement in this constructor in WEEK 2
+		vertices = new HashSet<GeographicPoint>();
+		mapEdges = new HashMap<GeographicPoint,MapNode>();
+		edgeNum = 0;
 	}
 	
 	/**
@@ -41,7 +60,7 @@ public class MapGraph {
 	public int getNumVertices()
 	{
 		//TODO: Implement this method in WEEK 2
-		return 0;
+		return this.vertices.size();
 	}
 	
 	/**
@@ -51,7 +70,7 @@ public class MapGraph {
 	public Set<GeographicPoint> getVertices()
 	{
 		//TODO: Implement this method in WEEK 2
-		return null;
+		return this.vertices;
 	}
 	
 	/**
@@ -61,7 +80,7 @@ public class MapGraph {
 	public int getNumEdges()
 	{
 		//TODO: Implement this method in WEEK 2
-		return 0;
+		return this.edgeNum;
 	}
 
 	
@@ -76,6 +95,10 @@ public class MapGraph {
 	public boolean addVertex(GeographicPoint location)
 	{
 		// TODO: Implement this method in WEEK 2
+		if(location != null && !vertices.contains(location)){
+			this.vertices.add(location);
+			return true;
+		}
 		return false;
 	}
 	
@@ -95,7 +118,29 @@ public class MapGraph {
 			String roadType, double length) throws IllegalArgumentException {
 
 		//TODO: Implement this method in WEEK 2
+		if(from==null || to == null || roadName == null || roadType == null || !this.vertices.contains(from) 
+				|| !this.vertices.contains(to) || length < 0){
+			throw new IllegalArgumentException();
+		}
+		MapEdge newEdge = new MapEdge(from, to, roadName, roadType, length);
+		MapNode mn = mapEdges.get(from);
+		if(mn == null){
+			mn = new MapNode();
+			mn.setLocation(from);
+			List<MapEdge> me = new ArrayList<MapEdge>();
+			me.add(newEdge);
+			mn.setEdges(me);
+			mapEdges.put(from, mn);
+			edgeNum ++;
+		}
+		else{
+			List<MapEdge> me = mn.getEdges();
+			me.add(newEdge);			
+			mapEdges.put(from, mn);
+			edgeNum ++;
+		}
 		
+	
 	}
 	
 
@@ -108,7 +153,7 @@ public class MapGraph {
 	 */
 	public List<GeographicPoint> bfs(GeographicPoint start, GeographicPoint goal) {
 		// Dummy variable for calling the search algorithms
-        Consumer<GeographicPoint> temp = (x) -> {};
+        Consumer<GeographicPoint> temp = (x) -> {}; 
         return bfs(start, goal, temp);
 	}
 	
@@ -127,7 +172,33 @@ public class MapGraph {
 		
 		// Hook for visualization.  See writeup.
 		//nodeSearched.accept(next.getLocation());
-
+		if(start == null || goal ==null || !this.vertices.contains(start) || !this.vertices.contains(goal))
+			return null;
+		Queue<GeographicPoint> queue = new LinkedList<GeographicPoint>();
+		HashSet<GeographicPoint> visted = new HashSet<>();		
+		List<GeographicPoint> result = new LinkedList<>();
+		
+		//Start to search from the first element of queue
+		queue.add(start);
+		visted.add(start);
+		//Loop until queue to be empty or we found the goal
+		while(queue.size() > 0){
+			GeographicPoint next = queue.poll();
+			MapNode mn = this.mapEdges.get(next);
+			nodeSearched.accept(next);
+			result.add(next);
+			if(next.equals(goal)) return result;
+			if(mn == null) return null;
+			List<MapEdge> edges = mn.getEdges();
+			if(edges == null || edges.size() == 0) continue;
+			for(MapEdge edge: edges){
+				if(!visted.contains(edge.getTo())){
+					visted.add(edge.getTo());				
+					queue.add(edge.getTo());
+				}
+				
+			}
+		}
 		return null;
 	}
 	
@@ -214,29 +285,32 @@ public class MapGraph {
 		 * the Week 3 End of Week Quiz, EVEN IF you score 100% on the 
 		 * programming assignment.
 		 */
-		/*
+		
 		MapGraph simpleTestMap = new MapGraph();
 		GraphLoader.loadRoadMap("data/testdata/simpletest.map", simpleTestMap);
 		
 		GeographicPoint testStart = new GeographicPoint(1.0, 1.0);
 		GeographicPoint testEnd = new GeographicPoint(8.0, -1.0);
 		
-		System.out.println("Test 1 using simpletest: Dijkstra should be 9 and AStar should be 5");
-		List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
-		List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
+		System.out.println("Testing BFS");
+		System.out.println(simpleTestMap.bfs(testStart, testEnd));
+		
+		//System.out.println("Test 1 using simpletest: Dijkstra should be 9 and AStar should be 5");
+		//List<GeographicPoint> testroute = simpleTestMap.dijkstra(testStart,testEnd);
+		//List<GeographicPoint> testroute2 = simpleTestMap.aStarSearch(testStart,testEnd);
 		
 		
-		MapGraph testMap = new MapGraph();
-		GraphLoader.loadRoadMap("data/maps/utc.map", testMap);
+//		MapGraph testMap = new MapGraph();
+//		GraphLoader.loadRoadMap("data/maps/utc.map", testMap);
 		
 		// A very simple test using real data
 		testStart = new GeographicPoint(32.869423, -117.220917);
 		testEnd = new GeographicPoint(32.869255, -117.216927);
-		System.out.println("Test 2 using utc: Dijkstra should be 13 and AStar should be 5");
-		testroute = testMap.dijkstra(testStart,testEnd);
-		testroute2 = testMap.aStarSearch(testStart,testEnd);
+		//System.out.println("Test 2 using utc: Dijkstra should be 13 and AStar should be 5");
+		//testroute = testMap.dijkstra(testStart,testEnd);
+		//testroute2 = testMap.aStarSearch(testStart,testEnd);
 		
-		
+		/*
 		// A slightly more complex test using real data
 		testStart = new GeographicPoint(32.8674388, -117.2190213);
 		testEnd = new GeographicPoint(32.8697828, -117.2244506);
